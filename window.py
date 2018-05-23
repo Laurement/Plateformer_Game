@@ -1,6 +1,7 @@
 #!/usr/env/bin python3
 import pygame
 import os
+from time import sleep
 from random import randint
 from superpyboy.player import Player
 from superpyboy.enemy import Enemy
@@ -10,6 +11,7 @@ resource_path = os.path.join(current_path, 'images')
 player = os.path.join(resource_path, 'players')
 elements = os.path.join(resource_path, 'elements')
 background = os.path.join(resource_path, 'background')
+ennemies = os.path.join(resource_path, 'ennemies')
 
 class Window(object):
 
@@ -25,11 +27,19 @@ class Window(object):
 
         #Taille de la fenêtre
         self._window = pygame.display.set_mode((self.width, self.height))
+
+
+
+        self.enne = pygame.image.load(os.path.join(ennemies, "snail.png")).convert_alpha()
+        self._window.blit(self.enne, (self.width - 250, (self.height - 70) - self.enne.get_size()[1]))
+        self.ennemy = Enemy(self.width - 250, ((self.height - 70) - self.enne.get_size()[1]))
+
         self.drawScreen()
 
         pinkPlayer = pygame.image.load(os.path.join(player, "player-right.png")).convert_alpha()
         self._window.blit(pinkPlayer, (0, (self.height - 70) - pinkPlayer.get_size()[1]))
         self.player = Player("L", 0, ((self.height - 70) - pinkPlayer.get_size()[1]))
+
         pygame.display.flip()
         pygame.key.set_repeat(400,30)
         #self.enemies = [Enemy('foo', Enemy("bar")]
@@ -37,6 +47,7 @@ class Window(object):
     def run(self):
         running = True
         while running:
+            pygame.event.pump()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
@@ -45,29 +56,37 @@ class Window(object):
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_ESCAPE:
                             running = False
+
                         self.player.update(event)
+
                         newPlayer = pygame.image.load(os.path.join(player, "player-right.png")).convert_alpha()
                         if (event.key == pygame.K_LEFT):
                             newPlayer = pygame.transform.flip(newPlayer, True, False)
 
-                        if self.player.x < 0 or self.player.x > self.width - newPlayer.get_size()[0]:
-                            print('MURRR')
-                        else:
+                        if not self.player.x < 0 or self.player.x > self.width - newPlayer.get_size()[0]:
                             self.drawScreen()
                             self._window.blit(newPlayer, (self.player.x, self.player.y))
 
-                        pygame.display.flip()
 
+                        #DETECT COLLISION
+                        rectPlayer = pygame.Rect(self.player.x, self.player.y, 70, 70)
+                        rectEnemy = pygame.Rect(self.ennemy.x, self.ennemy.y, 70, 70)
+
+                        if rectPlayer.colliderect(rectEnemy):
+                            pygame.font.init()
+                            myfont = pygame.font.SysFont('Comic Sans MS', 100)
+                            textsurface = myfont.render('GAME OVER', False, (0, 0, 0))
+                            self._window.blit(textsurface, (self.width / 4, self.height / 4 ))
+                            pygame.display.flip()
+                            sleep(0.5)
+                            self.__init__()
+
+                        pygame.display.flip()
 
                     elif keystate[pygame.K_UP]:
                         print(event)
                         print("pressed up")
-                   # if event in [pygame.K_UP, pygame.K_LEFT, pygame.K_RIGHT]:
-                        #print("coucou")
-                        #self.player.update(event)
 
-               # for enemy in self.enemies:
-                #    enemy.update()
 
 
     def drawScreen(self):
@@ -100,6 +119,7 @@ class Window(object):
             elif x != randomNb:
                 self._window.blit(floorMid, (70 * x, self.height - floorMid.get_size()[1]))
 
+        self._window.blit(self.enne, (self.ennemy.x, self.ennemy.y))
        # Ajout du dernier bloc sur la droite
         self._window.blit(floorRight, (self.width - floorRight.get_size()[0], self.height - floorRight.get_size()[1]))
 
